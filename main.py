@@ -1,4 +1,5 @@
 from openai import OpenAI
+import requests
 
 subject = input("Veuillez entrez un sujet : ")
 
@@ -30,5 +31,50 @@ print(content)
 print()
 print()
 print()
+
+completion2 = client.chat.completions.create(
+  model="gpt-4o-mini",
+  messages=[
+    {"role": "system", "content": "Vous êtes assistant capable d'aider à transformer des scripts en listes de mots-clés en anglais. Ces mots-clés seront ensuite utilisés pour rechercher des vidéos via l'API de Pexels. Votre tâche consiste à analyser le script donné, à identifier les mots et expressions importants, et à les présenter sous forme de liste de mots-clés."},
+    {"role": "user", "content": f"J'ai un script que je veux utiliser pour rechercher des vidéos sur Pexels. Transformez ce script en une liste de mots-clés en anglais et ne me répondez qu'avec les mots-clés, séparés par des '/'. Voici le script : {content}"},
+  ]
+)
+
+raw_article2 = completion2.choices[0].message.content
+content2 = raw_article2.replace("**", "").replace("\n\n", "\n").replace("--", "")
+
+keywords = content2.split("/")
+
+
+# API PEXELS
+
+API_KEY = 'nzrgfdPALGj5GanRXaoFF6DGmCizvCDXpsnhMrlthtMPRXK0oaAT1Iws'
+BASE_URL = 'https://api.pexels.com/videos/search'
+
+headers = {
+    'Authorization': API_KEY
+}
+
+print(keywords)
+print()
+print()
+for word in keywords:
+    query = word
+    params = {
+        'query': query,
+        'per_page': 1,
+        'page': 1
+    }
+
+
+    response = requests.get('https://api.pexels.com/videos/search', headers=headers, params=params)
+
+    data = response.json()
+    video = data['videos']
+
+    
+    print()
+    video_url = video[0]["url"]
+    print(f"{word}: {video_url}")
 
 response.stream_to_file("output.mp3")
